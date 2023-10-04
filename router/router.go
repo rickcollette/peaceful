@@ -2,6 +2,7 @@ package router
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -12,8 +13,8 @@ import (
 )
 
 type Router struct {
-	routes     []Route
-	middleware MiddlewareChain // Changed to MiddlewareChain
+	routes      []Route
+	middleware  MiddlewareChain // Changed to MiddlewareChain
 	routeGroups map[string]*RouteGroup
 }
 
@@ -35,7 +36,15 @@ type RouteGroup struct { // Added for versioning
 	router     *Router
 	middleware MiddlewareChain
 }
-var customTypes = map[string]string{}
+
+var (
+	customTypes        = map[string]string{}
+	validFilenameRegex = regexp.MustCompile(`^[a-zA-Z0-9_-]+\.[a-zA-Z0-9]+$`)
+)
+
+func isValidFilename(filename string) bool {
+	return validFilenameRegex.MatchString(filename)
+}
 
 // NewRouter creates a new Router instance
 func NewRouter() *Router {
@@ -47,6 +56,7 @@ func (g *RouteGroup) Handle(method, path string, handler http.HandlerFunc, middl
 	fullPath := g.prefix + path // Prepend the group prefix to the path
 	g.router.Handle(method, fullPath, handler, middleware...)
 }
+
 // Handle adds a new route to the router
 func (r *Router) Handle(method, path string, handler http.HandlerFunc, middleware ...Middleware) {
 	pattern, params := parsePath(path)
@@ -72,6 +82,7 @@ func (r *Router) Group(version string) *RouteGroup {
 	r.routeGroups[version] = group
 	return group
 }
+
 // Use adds new middleware to the router
 func (r *Router) Use(middleware ...Middleware) {
 	r.middleware = append(r.middleware, middleware...) // Appends the new middleware to the existing slice
@@ -117,18 +128,18 @@ func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 }
 
 func AddCustomType(name, pattern string) error {
-    if _, exists := customTypes[name]; exists {
-        return fmt.Errorf("a custom type with the name '%s' already exists", name)
-    }
+	if _, exists := customTypes[name]; exists {
+		return fmt.Errorf("a custom type with the name '%s' already exists", name)
+	}
 
-    // Validate if the provided pattern is a valid regular expression
-    _, err := regexp.Compile(pattern)
-    if err != nil {
-        return fmt.Errorf("invalid pattern: %v", err)
-    }
+	// Validate if the provided pattern is a valid regular expression
+	_, err := regexp.Compile(pattern)
+	if err != nil {
+		return fmt.Errorf("invalid pattern: %v", err)
+	}
 
-    customTypes[name] = pattern
-    return nil
+	customTypes[name] = pattern
+	return nil
 }
 
 func parsePath(path string) (*regexp.Regexp, map[int]string) {
@@ -181,20 +192,36 @@ func parsePath(path string) (*regexp.Regexp, map[int]string) {
 }
 
 func UploadFile(r *http.Request, formKey, uploadDir string) (string, error) {
+	// Parse the form data
+	err := r.ParseMultipartForm(10 << 20) // 10 MB max file size
+	if err != nil {
+		return "", err
+	}
+
+	// Get the file from the form data
 	file, header, err := r.FormFile(formKey)
 	if err != nil {
 		return "", err
 	}
 	defer file.Close()
 
+	// Validate the filename
+	if !isValidFilename(header.Filename) {
+		return "", errors.New("invalid filename")
+	}
+
+	// Construct the full path safely
 	safeFilename := filepath.Base(header.Filename)
 	uploadPath := filepath.Join(uploadDir, safeFilename)
+
+	// Create the output file
 	out, err := os.Create(uploadPath)
 	if err != nil {
 		return "", err
 	}
 	defer out.Close()
 
+	// Copy the uploaded file to the output file
 	_, err = io.Copy(out, file)
 	if err != nil {
 		return "", err
