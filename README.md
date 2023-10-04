@@ -47,6 +47,84 @@ func main() {
 }
 ```
 
+## Enhanced Parameterized Routes with Type Support
+Peaceful router supports typed parameters in routes, which allows for more granular control over the URL parameters and ensures that the incoming parameters adhere to the expected format. This feature is particularly useful for validating and filtering input data at the routing level.
+
+## Supported Parameter Types
+Peaceful router supports various parameter types, including but not limited to:
+
+  - int: Matches integer values, e.g., 42.
+  - float: Matches floating-point numbers, e.g., 3.14.
+  - uuid: Matches UUIDs, e.g., 123e4567-e89b-12d3-a456-426614174000.
+  - alphanumeric: Matches alphanumeric strings, e.g., abc123.
+  - string: Matches any string, e.g., hello.
+  - slug: Matches URL slugs, e.g., hello-world.
+  - email: Matches email addresses, e.g., example@example.com.
+  - date: Matches date strings in YYYY-MM-DD format, e.g., 2023-10-04.
+  - ipv4: Matches IPv4 addresses, e.g., 192.168.0.1.
+  - ipv6: Matches IPv6 addresses, e.g., 2001:0db8:85a3:0000:0000:8a2e:0370:7334.
+
+## Using Typed Parameters in Routes
+You can specify the expected type of a parameter directly in the route definition. Peaceful router will then use the appropriate regular expression to match and validate the parameter.
+
+
+```go
+package main
+
+import (
+    "fmt"
+    "net/http"
+    "github.com/rickcollette/peaceful/router"
+)
+
+func main() {
+    r := router.NewRouter()
+
+    // Integer parameter
+    r.GET("/users/:id:int", func(w http.ResponseWriter, r *http.Request) {
+        id := router.Param(r, "id")
+        fmt.Fprintf(w, "User ID (integer): %s", id)
+    })
+
+    // UUID parameter
+    r.GET("/products/:uuid:uuid", func(w http.ResponseWriter, r *http.Request) {
+        uuid := router.Param(r, "uuid")
+        fmt.Fprintf(w, "Product UUID: %s", uuid)
+    })
+
+    // Date parameter
+    r.GET("/events/:date:date", func(w http.ResponseWriter, r *http.Request) {
+        date := router.Param(r, "date")
+        fmt.Fprintf(w, "Event Date: %s", date)
+    })
+
+    http.ListenAndServe(":8080", r)
+}
+```
+Explanation:
+In this updated example:
+
+  - The route /users/:id:int expects an integer parameter named id.
+  - The route /products/:uuid:uuid expects a UUID parameter named uuid.
+  - The route /events/:date:date expects a date parameter named date.
+  - The router.Param function is used to extract the parameter value from the request.
+
+## Custom Parameter Types
+Peaceful also allows the definition of custom parameter types. You can add your own regular expressions to match specific patterns tailored to your application's needs.
+
+Example:
+```go
+// Register a custom parameter type for matching RGB color codes
+router.RegisterParamType("color", `[a-fA-F0-9]{6}`)
+
+r.GET("/colors/:color:color", func(w http.ResponseWriter, r *http.Request) {
+    color := router.Param(r, "color")
+    fmt.Fprintf(w, "Color Code: #%s", color)
+})
+```
+
+This flexibility ensures that your application can have robust and dynamic routing capable of handling a wide variety of scenarios, making the development process more efficient and the application more secure and user-friendly.
+
 ### Caching
 
 Use peaceful router's caching middleware to cache HTTP GET requests. The corrected way to add the caching middleware is shown below.
