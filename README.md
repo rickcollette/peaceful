@@ -25,7 +25,7 @@ go get github.com/rickcollette/peaceful/router
 
 ### Router
 
-router provides a basic router for handling HTTP requests. Here's how you can use it:
+peaceful router provides a basic router for handling HTTP requests. Here's how you can use it:
 
 ```go
 package main
@@ -49,7 +49,7 @@ func main() {
 
 ### Caching
 
-Use caching middleware to cache HTTP GET requests. The corrected way to add the caching middleware is shown below.
+Use peaceful router's caching middleware to cache HTTP GET requests. The corrected way to add the caching middleware is shown below.
 
 ```go
 r := router.NewRouter()
@@ -64,7 +64,7 @@ r.Use(func(next http.Handler) http.Handler {
 
 ### Shortcuts
 
-router provides shortcut methods for common HTTP methods like GET, POST, PUT, DELETE. They are used like this:
+peaceful router provides shortcut methods for common HTTP methods like GET, POST, PUT, DELETE. They are used like this:
 
 ```go
 r.GET("/path", handlerFunc)
@@ -75,7 +75,7 @@ r.DELETE("/path", handlerFunc)
 
 ### Request Binding
 
-router contains functions for binding request data to structs, including JSON and XML data. Example:
+peaceful router contains functions for binding request data to structs, including JSON and XML data. Example:
 
 ```go
 type MyData struct {
@@ -92,7 +92,7 @@ if err != nil {
 
 ### CSRF Protection
 
-router provides CSRF protection middleware. Use it like this:
+peaceful router provides CSRF protection middleware. Use it like this:
 
 ```go
 r.Use(router.CSRFMiddleware)
@@ -100,7 +100,7 @@ r.Use(router.CSRFMiddleware)
 
 ### CORS Handling
 
-router provides CORS handling middleware with configurable options. Here’s an example of how to use it:
+peaceful router provides CORS handling middleware with configurable options. Here’s an example of how to use it:
 
 ```go
 options := router.CORSOptions{
@@ -113,7 +113,7 @@ r.Use(router.CORS(options))
 
 ### Content Negotiation
 
-router provides a function for handling content negotiation. Here's how to use it:
+peaceful router provides a function for handling content negotiation. Here's how to use it:
 
 ```go
 router.Respond(w, r, 200, data)  // Automatically selects the content type based on the "Accept" header
@@ -121,7 +121,7 @@ router.Respond(w, r, 200, data)  // Automatically selects the content type based
 
 ## Example RESTful Application
 
-Here is a complete example of a RESTful application that utilizes these packages:
+Here is a complete example of a RESTful application that utilizes peaceful:
 
 ```go
 package main
