@@ -104,10 +104,10 @@ func main() {
 Explanation:
 In this updated example:
 
-  - The route /users/:id:int expects an integer parameter named id.
-  - The route /products/:uuid:uuid expects a UUID parameter named uuid.
-  - The route /events/:date:date expects a date parameter named date.
-  - The router.Param function is used to extract the parameter value from the request.
+  - The route ```/users/:id:int``` expects an integer parameter named id.
+  - The route ```/products/:uuid:uuid``` expects a UUID parameter named uuid.
+  - The route ```/events/:date:date``` expects a date parameter named date.
+  - The ```router.Param``` function is used to extract the parameter value from the request.
 
 ## Custom Parameter Types
 Peaceful also allows the definition of custom parameter types. You can add your own regular expressions to match specific patterns tailored to your application's needs.
