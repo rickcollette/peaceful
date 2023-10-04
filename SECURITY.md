@@ -11,4 +11,4 @@
 
 ## Reporting a Vulnerability
 
-Please use github issues to report a vulnerability
+Please use github issues (https://github.com/rickcollette/peaceful/issues) to report a vulnerability
