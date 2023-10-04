@@ -25,7 +25,7 @@ go get github.com/rickcollette/peaceful/router
 
 ### Router
 
-The `router.go` file provides a basic router for handling HTTP requests. Here's how you can use it:
+router provides a basic router for handling HTTP requests. Here's how you can use it:
 
 ```go
 package main
@@ -49,19 +49,22 @@ func main() {
 
 ### Caching
 
-The `caching.go` file provides middleware for caching HTTP GET requests. Here's an example of how to use it:
+Use caching middleware to cache HTTP GET requests. The corrected way to add the caching middleware is shown below.
 
 ```go
 r := router.NewRouter()
 
-r.Use(router.CachingMiddleware(10 * time.Minute))  // Cache responses for 10 minutes
+r.Use(func(next http.Handler) http.Handler {
+    return router.CachingMiddleware(10 * time.Minute, next)
+})
 
 // Your routes here
+
 ```
 
 ### Shortcuts
 
-The `shortcut.go` file provides shortcut methods for common HTTP methods like GET, POST, PUT, DELETE. They are used like this:
+router provides shortcut methods for common HTTP methods like GET, POST, PUT, DELETE. They are used like this:
 
 ```go
 r.GET("/path", handlerFunc)
@@ -72,7 +75,7 @@ r.DELETE("/path", handlerFunc)
 
 ### Request Binding
 
-The `requestbinding.go` file contains functions for binding request data to structs, including JSON and XML data. Example:
+router contains functions for binding request data to structs, including JSON and XML data. Example:
 
 ```go
 type MyData struct {
@@ -89,7 +92,7 @@ if err != nil {
 
 ### CSRF Protection
 
-The `csrf.go` file provides CSRF protection middleware. Use it like this:
+router provides CSRF protection middleware. Use it like this:
 
 ```go
 r.Use(router.CSRFMiddleware)
@@ -97,7 +100,7 @@ r.Use(router.CSRFMiddleware)
 
 ### CORS Handling
 
-The `cors.go` file provides CORS handling middleware with configurable options. Here’s an example of how to use it:
+router provides CORS handling middleware with configurable options. Here’s an example of how to use it:
 
 ```go
 options := router.CORSOptions{
@@ -110,7 +113,7 @@ r.Use(router.CORS(options))
 
 ### Content Negotiation
 
-The `contentnegotiation.go` file provides a function for handling content negotiation. Here's how to use it:
+router provides a function for handling content negotiation. Here's how to use it:
 
 ```go
 router.Respond(w, r, 200, data)  // Automatically selects the content type based on the "Accept" header
@@ -156,5 +159,4 @@ func main() {
     // Start server
     http.ListenAndServe(":8080", r)
 }
-
 ```
