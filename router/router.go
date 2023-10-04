@@ -187,7 +187,8 @@ func UploadFile(r *http.Request, formKey, uploadDir string) (string, error) {
 	}
 	defer file.Close()
 
-	uploadPath := filepath.Join(uploadDir, header.Filename)
+	safeFilename := filepath.Base(header.Filename)
+	uploadPath := filepath.Join(uploadDir, safeFilename)
 	out, err := os.Create(uploadPath)
 	if err != nil {
 		return "", err
