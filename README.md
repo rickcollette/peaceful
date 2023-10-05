@@ -238,3 +238,87 @@ func main() {
     http.ListenAndServe(":8080", r)
 }
 ```
+
+## Implementing JWT Authentication with JAHT
+
+JAHT is a package in the peaceful library that aids in implementing JWT (JSON Web Tokens) authentication in your Go applications. It provides utility functions for generating, validating, and parsing JWTs.
+
+### Installation
+
+To install JAHT, you can use the go get command as shown below:
+
+```sh
+go get github.com/rickcollette/peaceful/jaht
+```
+
+### Usage
+
+Here's a basic example of how you can use JAHT to implement JWT authentication:
+
+```go
+package main
+
+import (
+    "net/http"
+    "time"
+    "github.com/rickcollette/peaceful/jaht"
+    "github.com/rickcollette/peaceful/router"
+)
+
+func main() {
+    r := router.NewRouter()
+
+    // Secret key for signing JWT tokens
+    secretKey := []byte("your-secret-key")
+
+    // Middleware to validate JWT tokens
+    r.Use(func(next http.Handler) http.Handler {
+        return jaht.JwtMiddleware(next, secretKey)
+    })
+
+    // Route to generate a JWT token
+    r.GET("/generate-token", func(w http.ResponseWriter, r *http.Request) {
+        userID := "123"  // Replace with actual user ID
+        expirationTime := time.Hour * 24  // Token expiration time
+
+        // Generate JWT token
+        token, err := jaht.GenerateToken(userID, expirationTime, secretKey)
+        if err != nil {
+            http.Error(w, "Failed to generate token", http.StatusInternalServerError)
+            return
+        }
+
+        data := map[string]string{"token": token}
+        router.Respond(w, r, http.StatusOK, data)
+    })
+
+    // Protected route that requires a valid JWT token
+    r.GET("/protected", func(w http.ResponseWriter, r *http.Request) {
+        data := map[string]string{"message": "Welcome to the protected route!"}
+        router.Respond(w, r, http.StatusOK, data)
+    })
+
+    // Start the server
+    http.ListenAndServe(":8080", r)
+}
+```
+
+In this example, the `JwtMiddleware` is added to the router to validate JWT tokens on all incoming requests. A `/generate-token` route is added to generate a JWT token, and a protected `/protected` route requires a valid JWT token to access.
+
+### Testing JWT Authentication
+
+You can test JWT authentication using curl commands.
+
+1. Generate a JWT token:
+
+```sh
+curl http://localhost:8080/generate-token
+```
+
+2. Use the generated JWT token to access the protected route:
+
+```sh
+curl -H "Authorization: your-jwt-token" http://localhost:8080/protected
+```
+
+Replace "your-jwt-token" with the actual token received from the `/generate-token` endpoint.
