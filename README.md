@@ -17,6 +17,11 @@ This includes:
   - Contributions
   - Bugs
 
+## Tools
+
+I have create a new package of one off tools I use regularly for REST coding.
+There are examples as well.
+
 ## Installation
 
 go get github.com/rickcollette/peaceful/router
