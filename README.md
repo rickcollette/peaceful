@@ -1,7 +1,7 @@
 # peaceful
-This is a lightweight (as of now) RESTful library for go.
+This is a lightweight (as of now) set of RESTful libraries for go.
 
-This library provides a collection of utilities for building web applications with Go. It includes a router and various middleware for tasks like caching, CSRF protection, CORS handling, content negotiation, and request binding.
+This library provides a collection of utilities for building web applications with Go. It includes a router and various middleware for tasks like caching, CSRF protection, CORS handling, content negotiation, jwt handling, and request binding.
 
 ## Why?
   - Current implementations are more complex than needed
