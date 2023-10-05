@@ -5,11 +5,10 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/dgrijalva/jwt-go"
+	"github.com/golang-jwt/jwt"
 )
 
-var JwtSecret = []byte("secret")  // Replace with your own secret
-
+// GenerateToken generates a new JWT token
 func GenerateToken(userID string, expirationTime time.Duration, secretKey []byte) (string, error) {
     // Creating the JWT claims, which includes the user ID and expiry time
     claims := &jwt.StandardClaims{
@@ -29,6 +28,7 @@ func GenerateToken(userID string, expirationTime time.Duration, secretKey []byte
     return tokenString, nil
 }
 
+// ValidateToken validates the JWT token
 func ValidateToken(tokenString string, secretKey []byte) (string, error) {
     claims := &jwt.StandardClaims{}
 
@@ -68,4 +68,3 @@ func JwtMiddleware(next http.Handler, secretKey []byte) http.Handler {
         next.ServeHTTP(w, r)
     })
 }
-
