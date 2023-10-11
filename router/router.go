@@ -42,6 +42,19 @@ var (
 	validFilenameRegex = regexp.MustCompile(`^[a-zA-Z0-9_-]+\.[a-zA-Z0-9]+$`)
 )
 
+var typePatterns = map[string]*regexp.Regexp{
+	"int":          regexp.MustCompile(`\d+`),
+	"float":        regexp.MustCompile(`\d+(\.\d+)?`),
+	"uuid":         regexp.MustCompile(`[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}`),
+	"alphanumeric": regexp.MustCompile(`[a-zA-Z0-9]+`),
+	"string":       regexp.MustCompile(`[^/]+`),
+	"slug":         regexp.MustCompile(`[a-z0-9]+(-[a-z0-9]+)*`),
+	"email":        regexp.MustCompile(`[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}`),
+	"date":         regexp.MustCompile(`\d{4}-\d{2}-\d{2}`),
+	"ipv4":         regexp.MustCompile(`\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b`),
+	"ipv6":         regexp.MustCompile(`\b([a-fA-F0-9]{1,4}:){7}[a-fA-F0-9]{1,4}\b`),
+}
+
 func isValidFilename(filename string) bool {
 	return validFilenameRegex.MatchString(filename)
 }
@@ -54,8 +67,10 @@ func NewRouter() *Router {
 }
 func (g *RouteGroup) Handle(method, path string, handler http.HandlerFunc, middleware ...Middleware) {
 	fullPath := g.prefix + path // Prepend the group prefix to the path
+	middleware = append(middleware, g.middleware...) // Add the group's middleware to the route's middleware
 	g.router.Handle(method, fullPath, handler, middleware...)
 }
+
 
 // Handle adds a new route to the router
 func (r *Router) Handle(method, path string, handler http.HandlerFunc, middleware ...Middleware) {
@@ -89,6 +104,7 @@ func (r *Router) Use(middleware ...Middleware) {
 }
 
 // ServeHTTP makes the router implement the http.Handler interface
+// Modified ServeHTTP function to apply middleware
 func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	var finalHandler http.Handler
 
@@ -111,6 +127,9 @@ func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 				for _, mw := range route.middleware {
 					routeHandler = mw(routeHandler)
 				}
+
+				// If you want to apply global middleware to each route as well,
+				// you can do so here by iterating over r.middleware.
 
 				routeHandler.ServeHTTP(w, req)
 				return
@@ -142,6 +161,19 @@ func AddCustomType(name, pattern string) error {
 	return nil
 }
 
+// Param function to extract parameters from the request context
+func Param(r *http.Request, name string) string {
+	type key int
+	const paramsKey key = 0
+	params := r.Context().Value(paramsKey).(map[string]string)
+	return params[name]
+}
+
+// RegisterParamType allows the registration of custom parameter types with specific regex patterns
+func RegisterParamType(name, pattern string) {
+	typePatterns[name] = regexp.MustCompile(pattern)
+}
+
 func parsePath(path string) (*regexp.Regexp, map[int]string) {
 	paramRe := regexp.MustCompile(`{(\w+)(?::(\w+))?}`) // Updated regex to capture optional type
 
@@ -153,43 +185,21 @@ func parsePath(path string) (*regexp.Regexp, map[int]string) {
 		paramType := match[2]
 
 		// Default regex is \w+ for word characters
-		paramRegex := `(\w+)`
+		paramRegex := typePatterns["string"].String() // Default to string type
 
-		// Customize regex based on parameter type
-		switch paramType {
-		case "int":
-			paramRegex = `(\d+)`
-		case "float":
-			paramRegex = `(\d+\.\d+)`
-		case "uuid":
-			paramRegex = `([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12})`
-		case "alphanumeric":
-			paramRegex = `([a-zA-Z0-9]+)`
-		case "string":
-			paramRegex = `(.+)`
-		case "slug":
-			paramRegex = `([a-z0-9-]+)`
-		case "email":
-			paramRegex = `([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})`
-		case "date":
-			paramRegex = `(\d{4}-\d{2}-\d{2})`
-		case "ipv4":
-			paramRegex = `((?:\d{1,3}\.){3}\d{1,3})`
-		case "ipv6":
-			paramRegex = `((?:[a-fA-F0-9]{1,4}:){7}[a-fA-F0-9]{1,4})`
-		default:
-			if customPattern, exists := customTypes[paramType]; exists {
-				paramRegex = fmt.Sprintf("(%s)", customPattern)
-			}
+		// If the parameter type is recognized, use its specific regex pattern
+		if pattern, exists := typePatterns[paramType]; exists {
+			paramRegex = pattern.String()
 		}
 
-		path = strings.Replace(path, match[0], paramRegex, 1)
+		path = strings.Replace(path, match[0], fmt.Sprintf("(%s)", paramRegex), 1)
 		params[i] = paramName
 	}
 
 	pathRe := regexp.MustCompile("^" + path + "$")
 	return pathRe, params
 }
+
 
 func UploadFile(r *http.Request, formKey, uploadDir string) (string, error) {
 	// Parse the form data
